@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [lastError, setLastError] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Load state from local storage
@@ -56,12 +57,29 @@ const App: React.FC = () => {
     localStorage.setItem('bible_version', bibleVersion);
   }, [bibleVersion]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (instant = false) => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const isOverflowing = container.scrollHeight > container.clientHeight;
+    
+    // Only scroll if the content actually exceeds the visible area
+    if (isOverflowing) {
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: instant ? 'auto' : 'smooth',
+        block: 'end'
+      });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Small delay helps with mobile keyboard layout shifts
+    const timer = setTimeout(() => {
+      if (messages.length > 1 || isLoading) {
+        scrollToBottom();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages, isLoading]);
 
   const toggleFavorite = (message: Message) => {
@@ -188,8 +206,14 @@ const App: React.FC = () => {
       </header>
 
       {/* Main Chat Area */}
-      <main className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
+      <main 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto px-4 pt-10 pb-6"
+      >
         <div className="max-w-4xl mx-auto flex flex-col min-h-full">
+          {/* Top spacer to ensure first message isn't too close to header */}
+          <div className="h-6 w-full flex-shrink-0" />
+          
           {messages.map((msg) => (
             <ChatMessage 
               key={msg.id} 
