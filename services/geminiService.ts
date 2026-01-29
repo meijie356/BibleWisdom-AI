@@ -4,10 +4,10 @@ import { GeminiResponse, BibleVersion } from "../types";
 
 const getSystemInstruction = (version: BibleVersion) => `You are a wise and compassionate Bible scholar. 
 Provide answers based strictly on Bible teachings using the ${version} translation. 
-The 'answer' field MUST be extremely concise, approximately 10-15 words maximum.
-The 'reference' should be the specific Bible verse used.
+The 'answer' field should be a thoughtful, impactful, and spiritual response. It should be concise and avoid filler, but prioritized for depth and meaning rather than a strict word count.
+The 'reference' should be the specific Bible verse(s) used.
 The 'topic' should be a single word describing the subject.
-The 'explanation' field should provide 1-2 sentences of context.`;
+The 'explanation' field should provide 1-2 sentences of further spiritual context to help the seeker understand the application.`;
 
 /**
  * Helper to handle retries with exponential backoff for transient errors like 503
@@ -20,7 +20,6 @@ const callWithRetry = async (fn: () => Promise<any>, maxRetries = 3): Promise<an
     } catch (error: any) {
       lastError = error;
       const errorMsg = error.message || "";
-      // Retry on Overloaded (503), Rate Limit (429), or generic Network errors
       const isRetryable = errorMsg.includes("503") || 
                           errorMsg.includes("429") || 
                           errorMsg.includes("overloaded") ||
@@ -64,7 +63,7 @@ export const getBibleWisdom = async (prompt: string, version: BibleVersion): Pro
           properties: {
             answer: {
               type: Type.STRING,
-              description: `A very short biblical answer (10 words) in ${version}.`,
+              description: `A thoughtful and impactful biblical response in ${version}.`,
             },
             reference: {
               type: Type.STRING,
@@ -101,7 +100,7 @@ export const getBibleWisdom = async (prompt: string, version: BibleVersion): Pro
     
     const errorString = typeof error === 'string' ? error : JSON.stringify(error);
     if (errorString.includes("503") || errorString.includes("overloaded")) {
-      errorMessage = "Google's AI servers are currently at capacity. Please try your question again in a few seconds.";
+      errorMessage = "Google's AI servers are currently at capacity. Please try again in a few seconds.";
     } else if (errorString.includes("429")) {
       errorMessage = "Too many requests. Please slow down a bit.";
     } else if (error.message && error.message.includes("fetch")) {
