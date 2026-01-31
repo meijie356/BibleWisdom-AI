@@ -1,7 +1,7 @@
 
 export type Role = 'user' | 'assistant';
-
 export type BibleVersion = 'NIV' | 'KJV' | 'ESV' | 'NLT' | 'NKJV' | 'NASB';
+export type AiProvider = 'gemini' | 'ollama';
 
 export interface Message {
   id: string;
@@ -33,4 +33,10 @@ export interface GeminiResponse {
   topic: string;
   explanation: string;
   error?: string;
+}
+
+export interface AiSettings {
+  provider: AiProvider;
+  ollamaHost: string;
+  ollamaModel: string;
 }
