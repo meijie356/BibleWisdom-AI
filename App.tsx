@@ -173,10 +173,19 @@ const App: React.FC = () => {
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase block mb-3">Service Provider</label>
                 <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                  <button onClick={() => setAiSettings({...aiSettings, provider: 'gemini'})} className={`py-2 rounded-lg text-xs font-bold transition-all ${aiSettings.provider === 'gemini' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500'}`}>Cloud Gemini</button>
-                  <button onClick={() => setAiSettings({...aiSettings, provider: 'ollama'})} className={`py-2 rounded-lg text-xs font-bold transition-all ${aiSettings.provider === 'ollama' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500'}`}>Local Ollama</button>
+                  <button onClick={() => setAiSettings({...aiSettings, provider: 'gemini'})} className={`py-2 rounded-lg text-xs font-bold transition-all ${aiSettings.provider === 'gemini' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500'}`}>Cloud</button>
+                  <button onClick={() => setAiSettings({...aiSettings, provider: 'ollama'})} className={`py-2 rounded-lg text-xs font-bold transition-all ${aiSettings.provider === 'ollama' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'text-slate-500'}`}>Local</button>
                 </div>
               </div>
+
+              {aiSettings.provider === 'gemini' && (
+                <div className="space-y-4 animate-in slide-in-from-top-2">
+                  <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-600 leading-relaxed">
+                    <p className="font-bold mb-1">Cloud Service Active</p>
+                    Using Gemini 3.1 Flash Lite for high-quality spiritual insights. No configuration required.
+                  </div>
+                </div>
+              )}
 
               {aiSettings.provider === 'ollama' && (
                 <div className="space-y-4 animate-in slide-in-from-top-2">
@@ -194,25 +203,40 @@ const App: React.FC = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => setShowSettings(false)} className="w-full mt-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200">Save & Close</button>
+            <button onClick={() => setShowSettings(false)} className="w-full mt-6 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 active:scale-95 transition-all">Save & Close</button>
           </div>
         </div>
       )}
 
-      {/* Favorites Modal (Simplified version for brevity) */}
+      {/* Favorites Modal */}
       {showFavorites && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className={`w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col rounded-3xl ${darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
-            <div className="p-6 border-b flex justify-between">
+            <div className="p-6 border-b flex justify-between items-center">
               <h2 className="font-serif text-xl font-bold">Saved Wisdom</h2>
-              <button onClick={() => setShowFavorites(false)}><i className="fa-solid fa-xmark"></i></button>
+              <button onClick={() => setShowFavorites(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><i className="fa-solid fa-xmark"></i></button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {savedAnswers.length === 0 ? <p className="text-center text-slate-400 py-10 text-sm">No saved verses yet.</p> : savedAnswers.map(s => (
-                <div key={s.id} className={`p-4 rounded-2xl border ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
-                  <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-indigo-500 uppercase">{s.topic}</span><button onClick={() => setSavedAnswers(p => p.filter(x => x.id !== s.id))} className="text-rose-500"><i className="fa-solid fa-trash text-xs"></i></button></div>
-                  <p className="text-sm font-medium mb-1">{s.answer}</p>
-                  <p className="text-[10px] text-slate-500 font-bold">— {s.reference} ({s.version})</p>
+                <div key={s.id} className={`p-4 rounded-2xl border transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-100'}`}>
+                  <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-indigo-500 uppercase">{s.topic}</span><button onClick={() => setSavedAnswers(p => p.filter(x => x.id !== s.id))} className="text-rose-500 hover:text-rose-600"><i className="fa-solid fa-trash text-xs"></i></button></div>
+                  <p className="text-sm font-medium mb-1 leading-relaxed">{s.answer}</p>
+                  <p className="text-[10px] text-slate-500 font-bold mb-2">— {s.reference} ({s.version})</p>
+                  {s.sources && s.sources.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {s.sources.map((url, idx) => (
+                        <a 
+                          key={idx} 
+                          href={url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className={`text-[8px] px-1.5 py-0.5 rounded border ${darkMode ? 'bg-slate-900 border-slate-700 text-indigo-400' : 'bg-white border-slate-200 text-indigo-600'}`}
+                        >
+                          {new URL(url).hostname.replace('www.', '')}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

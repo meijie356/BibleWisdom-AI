@@ -35,8 +35,34 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSave, isSaved, isD
             {!isUser && message.metadata && (
               <>
                 {isExpanded && (
-                  <div className={`mt-3 pt-3 border-t text-xs italic animate-in fade-in slide-in-from-top-1 duration-300 ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-100 text-slate-600'}`}>
-                    {message.metadata.explanation}
+                  <div className={`mt-3 pt-3 border-t text-xs animate-in fade-in slide-in-from-top-1 duration-300 ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                    <div className={`italic mb-3 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                      {message.metadata.explanation}
+                    </div>
+                    {message.metadata.sources && message.metadata.sources.length > 0 && (
+                      <div className="mt-2">
+                        <p className={`text-[9px] font-bold uppercase tracking-widest mb-1.5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Grounded Sources</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {message.metadata.sources.map((url, idx) => (
+                            <a 
+                              key={idx} 
+                              href={url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className={`px-2 py-1 rounded-lg text-[9px] font-medium truncate max-w-[150px] transition-all border ${
+                                isDarkMode 
+                                  ? 'bg-slate-800 border-slate-700 text-indigo-400 hover:bg-slate-700' 
+                                  : 'bg-slate-50 border-slate-200 text-indigo-600 hover:bg-slate-100'
+                              }`}
+                              title={url}
+                            >
+                              <i className="fa-solid fa-link mr-1 opacity-50"></i>
+                              {new URL(url).hostname.replace('www.', '')}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

@@ -13,6 +13,7 @@ export interface Message {
     topic: string;
     explanation: string;
     version?: BibleVersion;
+    sources?: string[];
   };
 }
 
@@ -25,6 +26,7 @@ export interface SavedAnswer {
   explanation: string;
   version: BibleVersion;
   timestamp: Date;
+  sources?: string[];
 }
 
 export interface GeminiResponse {
@@ -32,6 +34,7 @@ export interface GeminiResponse {
   reference: string;
   topic: string;
   explanation: string;
+  sources?: string[];
   error?: string;
 }
 

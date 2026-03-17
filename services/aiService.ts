@@ -3,11 +3,21 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { GeminiResponse, BibleVersion, AiSettings } from "../types";
 
 const getSystemInstruction = (version: BibleVersion) => `You are a wise and compassionate Bible scholar. 
-Provide answers based strictly on Bible teachings using the ${version} translation. 
-The 'answer' field should be a thoughtful, impactful, and spiritual response. 
-The 'reference' should be the specific Bible verse(s) used.
-The 'topic' should be a single word describing the subject.
-The 'explanation' field should provide 1-2 sentences of further spiritual context.
+Your primary goal is to provide spiritual wisdom grounded in the Holy Bible.
+
+STRICT REQUIREMENTS:
+1. You MUST use the ${version} (Bible translation) for all quotes and references.
+2. When a user asks for a specific verse (e.g., "John 3:16"), the 'answer' field MUST contain ONLY the verbatim text of that verse from the ${version}.
+3. Use Google Search grounding to find the EXACT text of the verse in the ${version} translation. You MUST use ONLY the text source from bible.com (YouVersion).
+4. Do not use commentary or explanations as the source for the 'answer' text if a verse is requested.
+5. Do not summarize or paraphrase the verse in the 'answer' field if the user is asking for the verse itself.
+
+JSON STRUCTURE:
+- 'answer': The verbatim text of the verse from ${version} (if a verse is requested) OR a thoughtful spiritual response.
+- 'reference': The specific book, chapter, and verse (e.g., "John 3:16").
+- 'topic': A single word describing the theme.
+- 'explanation': 1-2 sentences of spiritual context or application.
+
 Return ONLY valid JSON.`;
 
 const callWithRetry = async (fn: () => Promise<any>, maxRetries = 3): Promise<any> => {
@@ -78,32 +88,50 @@ const getOllamaWisdom = async (prompt: string, version: BibleVersion, settings: 
 };
 
 const getGeminiWisdom = async (prompt: string, version: BibleVersion): Promise<GeminiResponse> => {
-  const apiKey = process.env.API_KEY || '';
-  if (!apiKey) return { answer: "Error", reference: "", topic: "Config", explanation: "", error: "Gemini API Key missing." };
+  const apiKey = process.env.GEMINI_API_KEY || '';
+  if (!apiKey) return { answer: "Error", reference: "", topic: "Config", explanation: "", error: "Gemini API Key missing in environment." };
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const result = await callWithRetry(() => ai.models.generateContent({
+    const response = await callWithRetry(() => ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        systemInstruction: getSystemInstruction(version),
+        systemInstruction: getSystemInstruction(version) + " Use Google Search grounding to verify Bible verses and find relevant spiritual web sources if needed.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            answer: { type: Type.STRING },
+            answer: { 
+              type: Type.STRING,
+              description: "The verbatim verse text from the requested translation if a verse is asked for, otherwise a spiritual response."
+            },
             reference: { type: Type.STRING },
             topic: { type: Type.STRING },
             explanation: { type: Type.STRING },
           },
           required: ["answer", "reference", "topic", "explanation"],
         },
-        temperature: 0.5,
+        temperature: 0,
+        tools: [{ googleSearch: {} }],
       },
     }));
 
-    return JSON.parse(result.text || "{}");
+    const content = JSON.parse(response.text || "{}");
+    
+    // Extract grounding sources
+    const sources: string[] = [];
+    const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (chunks) {
+      chunks.forEach((chunk: any) => {
+        if (chunk.web?.uri) sources.push(chunk.web.uri);
+      });
+    }
+
+    return {
+      ...content,
+      sources: sources.length > 0 ? Array.from(new Set(sources)) : undefined
+    };
   } catch (error: any) {
     return { answer: "Error", reference: "", topic: "Error", explanation: "", error: error.message };
   }
